@@ -1,0 +1,29 @@
+.modal {
+    position: relative;
+    padding: 20px;
+    background: white;
+    max-width: 90%;
+    max-height: 90%;
+    margin: auto;
+    border-radius: 10px;
+    overflow: auto;
+}
+
+.overlay {
+    background-color: rgba(0, 0, 0, 0.75);
+}
+
+.image {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin-bottom: 16px;
+}
+
+.info {
+    color: #333;
+}
+
+.info p {
+    margin: 4px 0;
+}
