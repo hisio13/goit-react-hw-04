@@ -4,16 +4,12 @@ import toast, { Toaster } from "react-hot-toast";
 
 import SearchBar from "./components/SearchBar/SearchBar.jsx";
 import ImageGallery from "./components/ImageGallery/ImageGallery.jsx";
-
 import ImageModal from "./components/ImageModal/ImageModal.jsx";
-
 import Loader from "./components/Loader/Loader.jsx";
 import ErrorMessage from "./components/ErrorMessage/ErrorMessage.jsx";
 import LoadMoreBtn from "./components/LoadMoreBtn/LoadMoreBtn.jsx";
 
-import React from "react";
 import Modal from "react-modal";
-
 Modal.setAppElement("#root");
 
 function App() {
@@ -24,7 +20,7 @@ function App() {
   const [error, setError] = useState(false);
 
   const [modalIsOpen, setIsOpen] = useState(false);
-  const [modalImage, setModalImage] = useState(false);
+  const [modalImage, setModalImage] = useState(null); // змінено на null
 
   const [page, setPage] = useState(1);
   const [totalImages, setTotalImages] = useState(0);
@@ -86,7 +82,7 @@ function App() {
     const nextPage = page + 1;
     setPage(nextPage);
   };
- 
+
   function openModal(image) {
     setIsOpen(true);
     setModalImage(image);
@@ -94,7 +90,7 @@ function App() {
 
   function closeModal() {
     setIsOpen(false);
-    setModalImage(false);
+    setModalImage(null); // змінено на null
   }
 
   useEffect(() => {
@@ -110,11 +106,13 @@ function App() {
       {error && <ErrorMessage />}
       <ImageGallery images={images} onCardClick={openModal} />
       {loading && <Loader />}
-      <ImageModal
-        modalIsOpen={modalIsOpen}
-        closeModal={closeModal}
-        image={modalImage}
-      />
+      {modalImage && ( // додано перевірку
+        <ImageModal
+          modalIsOpen={modalIsOpen}
+          closeModal={closeModal}
+          image={modalImage}
+        />
+      )}
       {totalImages > 0 ? (
         visible < totalImages ? (
           <div>
@@ -131,3 +129,4 @@ function App() {
 }
 
 export default App;
+  
