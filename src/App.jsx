@@ -1,101 +1,132 @@
-import { useEffect, useState } from 'react';
-import toast, { Toaster } from 'react-hot-toast';
-import Modal from 'react-modal';
+import { useState, useEffect } from "react";
+import axios from "axios";
+import toast, { Toaster } from "react-hot-toast";
 
-import SearchBar from './components/SearchBar/SearchBar';
-import ImageGallery from './components/ImageGallery/ImageGallery';
-import ImageModal from './components/ImageModal/ImageModal';
-import LoadMoreBtn from './components/LoadMoreBtn/LoadMoreBtn';
-import Loader from './components/Loader/Loader';
-import ErrorMessage from './components/ErrorMessage/ErrorMessage';
+import SearchBar from "./components/SearchBar/SearchBar.jsx";
+import ImageGallery from "./components/ImageGallery/ImageGallery.jsx";
 
-import { fetchImages } from './services/unsplash-api';
+import ImageModal from "./components/ImageModal/ImageModal.jsx";
 
-Modal.setAppElement('#root');
+import Loader from "./components/Loader/Loader.jsx";
+import ErrorMessage from "./components/ErrorMessage/ErrorMessage.jsx";
+import LoadMoreBtn from "./components/LoadMoreBtn/LoadMoreBtn.jsx";
+
+import React from "react";
+import Modal from "react-modal";
+
+Modal.setAppElement("#root");
 
 function App() {
-  const [query, setQuery] = useState('');
   const [images, setImages] = useState([]);
+  const [query, setQuery] = useState("");
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+
+  const [modalIsOpen, setIsOpen] = useState(false);
+  const [modalImage, setModalImage] = useState(false);
+
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [totalImages, setTotalImages] = useState(0);
+  const [visible, setVisible] = useState(0);
+
+  async function fetchImages(search, pageNum) {
+    if (loading) return;
+
+    try {
+      setLoading(true);
+
+      const accessKey = "BpYRJE4xvIB7Hxr42pvsR_NQNvTzNNmnT9DRQT8iIoo";
+      const response = await axios.get(
+        `https://api.unsplash.com/search/photos`,
+        {
+          params: {
+            query: search,
+            page: pageNum,
+            client_id: accessKey,
+            per_page: 4,
+          },
+        }
+      );
+      if (response.data.results.length === 0) {
+        toast.error("No photos for this topic");
+        setImages([]);
+        setTotalImages(0);
+        setVisible(0);
+        return;
+      }
+
+      setImages((prevImages) => [...prevImages, ...response.data.results]);
+      setVisible((prevVisible) => prevVisible + response.data.results.length);
+
+      setTotalImages(response.data.total);
+
+      setError(false);
+    } catch (error) {
+      setError(true);
+      setTotalImages(0);
+      setVisible(0);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleSearch(topic) {
+    if (topic !== query) {
+      setImages([]);
+      setPage(1);
+      setVisible(0);
+      setTotalImages(0);
+      setQuery(topic);
+    }
+  }
+
+  const handleOnLoadMore = () => {
+    if (loading || visible >= totalImages) return;
+    const nextPage = page + 1;
+    setPage(nextPage);
+  };
+ 
+  function openModal(image) {
+    setIsOpen(true);
+    setModalImage(image);
+  }
+
+  function closeModal() {
+    setIsOpen(false);
+    setModalImage(false);
+  }
 
   useEffect(() => {
-    if (!query) return;
-
-    const fetchImagesData = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        const data = await fetchImages(query, page);
-
-        if (data && data.results && Array.isArray(data.results)) {
-          if (data.results.length === 0) {
-            toast.error('No images found. Try another search!');
-            return;
-          }
-
-          setImages(prev => (page === 1 ? data.results : [...prev, ...data.results]));
-          setTotalPages(data.total_pages);
-        } else {
-          throw new Error('Unexpected response format');
-        }
-      } catch (err) {
-        console.error('Error fetching images:', err);
-        setError('Failed to fetch images.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchImagesData();
+    if (query && page > 0) {
+      fetchImages(query, page);
+    }
   }, [query, page]);
 
-  const handleSearch = newQuery => {
-    if (newQuery === query) return;
-
-    setQuery(newQuery);
-    setImages([]);
-    setPage(1);
-    setTotalPages(0);
-  };
-
-  const handleLoadMore = () => {
-    setPage(prev => prev + 1);
-  };
-
-  const openModal = image => {
-    setSelectedImage(image);
-  };
-
-  const closeModal = () => {
-    setSelectedImage(null);
-  };
-
   return (
-    <div>
+    <>
       <Toaster position="top-right" />
-      <SearchBar onSubmit={handleSearch} />
-
-      {error && <ErrorMessage message={error} />}
-
-      {images.length > 0 && (
-        <ImageGallery images={images} onImageClick={openModal} />
-      )}
-
-      {isLoading && <Loader />}
-
-      {images.length > 0 && !isLoading && page < totalPages && (
-        <LoadMoreBtn onClick={handleLoadMore} />
-      )}
-
-      {selectedImage && (
-        <ImageModal image={selectedImage} onClose={closeModal} />
-      )}
-    </div>
+      <SearchBar onSearch={handleSearch} />
+      {error && <ErrorMessage />}
+      <ImageGallery images={images} onCardClick={openModal} />
+      {loading && <Loader />}
+      <ImageModal
+        modalIsOpen={modalIsOpen}
+        closeModal={closeModal}
+        image={modalImage}
+      />
+      {totalImages > 0 ? (
+        visible < totalImages ? (
+          <div>
+            <LoadMoreBtn loadMoreOnClick={handleOnLoadMore} loading={loading} />
+          </div>
+        ) : (
+          <div>
+            <p>No more images for this topic.</p>
+          </div>
+        )
+      ) : null}
+    </>
   );
 }
 

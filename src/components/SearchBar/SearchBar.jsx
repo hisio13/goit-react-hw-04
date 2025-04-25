@@ -2,7 +2,7 @@ import css from './SearchBar.module.css';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 
-export default function SearchBar({ onSubmit }) {
+export default function SearchBar({ onSearch }) {
   const [query, setQuery] = useState('');
 
   const handleChange = e => setQuery(e.target.value);
@@ -13,7 +13,7 @@ export default function SearchBar({ onSubmit }) {
       toast.error('Please enter a search term!');
       return;
     }
-    onSubmit(query);
+    onSearch(query);
     setQuery('');
   };
 
