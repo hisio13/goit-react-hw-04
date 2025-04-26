@@ -1,10 +1,10 @@
-.buttonWrapper {
+.loadMoreWrapper {
     display: flex;
     justify-content: center;
     padding: 20px;
 }
 
-.button {
+.loadMoreButton {
     padding: 12px 24px;
     font-size: 16px;
     font-weight: bold;
@@ -16,6 +16,6 @@
     transition: background-color 0.3s ease;
 }
 
-.button:hover {
+.loadMoreButton:hover {
     background-color: #21a1f1;
 }

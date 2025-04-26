@@ -15,73 +15,60 @@ Modal.setAppElement("#root");
 function App() {
   const [images, setImages] = useState([]);
   const [query, setQuery] = useState("");
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
-
   const [modalIsOpen, setIsOpen] = useState(false);
-  const [modalImage, setModalImage] = useState(null); // змінено на null
-
+  const [modalImage, setModalImage] = useState(null);
   const [page, setPage] = useState(1);
   const [totalImages, setTotalImages] = useState(0);
-  const [visible, setVisible] = useState(0);
 
   async function fetchImages(search, pageNum) {
     if (loading) return;
 
     try {
       setLoading(true);
-
       const accessKey = "BpYRJE4xvIB7Hxr42pvsR_NQNvTzNNmnT9DRQT8iIoo";
-      const response = await axios.get(
-        `https://api.unsplash.com/search/photos`,
-        {
-          params: {
-            query: search,
-            page: pageNum,
-            client_id: accessKey,
-            per_page: 4,
-          },
-        }
-      );
+      const response = await axios.get(`https://api.unsplash.com/search/photos`, {
+        params: {
+          query: search,
+          page: pageNum,
+          client_id: accessKey,
+          per_page: 4,
+        },
+      });
+
       if (response.data.results.length === 0) {
         toast.error("No photos for this topic");
         setImages([]);
         setTotalImages(0);
-        setVisible(0);
         return;
       }
 
       setImages((prevImages) => [...prevImages, ...response.data.results]);
-      setVisible((prevVisible) => prevVisible + response.data.results.length);
-
       setTotalImages(response.data.total);
-
       setError(false);
     } catch (error) {
       setError(true);
+      setImages([]);
       setTotalImages(0);
-      setVisible(0);
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleSearch(topic) {
+  function handleSearch(topic) {
     if (topic !== query) {
       setImages([]);
       setPage(1);
-      setVisible(0);
       setTotalImages(0);
       setQuery(topic);
     }
   }
 
-  const handleOnLoadMore = () => {
-    if (loading || visible >= totalImages) return;
-    const nextPage = page + 1;
-    setPage(nextPage);
-  };
+  function handleLoadMore() {
+    if (loading) return;
+    setPage((prevPage) => prevPage + 1);
+  }
 
   function openModal(image) {
     setIsOpen(true);
@@ -90,11 +77,11 @@ function App() {
 
   function closeModal() {
     setIsOpen(false);
-    setModalImage(null); // змінено на null
+    setModalImage(null);
   }
 
   useEffect(() => {
-    if (query && page > 0) {
+    if (query) {
       fetchImages(query, page);
     }
   }, [query, page]);
@@ -106,27 +93,21 @@ function App() {
       {error && <ErrorMessage />}
       <ImageGallery images={images} onCardClick={openModal} />
       {loading && <Loader />}
-      {modalImage && ( // додано перевірку
+      {modalImage && (
         <ImageModal
-          modalIsOpen={modalIsOpen}
-          closeModal={closeModal}
+          isOpen={modalIsOpen}
+          onRequestClose={closeModal}
           image={modalImage}
         />
       )}
-      {totalImages > 0 ? (
-        visible < totalImages ? (
-          <div>
-            <LoadMoreBtn loadMoreOnClick={handleOnLoadMore} loading={loading} />
-          </div>
-        ) : (
-          <div>
-            <p>No more images for this topic.</p>
-          </div>
-        )
-      ) : null}
+      {!loading && images.length > 0 && images.length < totalImages && (
+        <LoadMoreBtn onClick={handleLoadMore} />
+      )}
+      {!loading && images.length > 0 && images.length >= totalImages && (
+        <p>No more images for this topic.</p>
+      )}
     </>
   );
 }
 
 export default App;
-  
