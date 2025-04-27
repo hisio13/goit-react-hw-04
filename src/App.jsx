@@ -96,7 +96,7 @@ function App() {
       {modalImage && (
         <ImageModal
           isOpen={modalIsOpen}
-          onRequestClose={closeModal}
+          onClose={closeModal}
           image={modalImage}
         />
       )}
